@@ -1,0 +1,26 @@
+pipeline { 
+    agent {label 'docker'}
+    environment{
+        docker_cred_USR = "${USER}" 
+        docker_cred_PSW = "${PSW}"
+    }
+    stages{
+        stage('pull from git'){
+            steps{
+                deleteDir()
+                sh 'git clone https://github.com/liranos86/docker-cicd.git'
+            }
+        }
+        stage ('build & tag'){
+            steps{
+                sh "docker build -t liranos86/docker-cicd:${BUILD_NUMBER} ./docker-cicd"
+            }
+        }
+        stage ('push') {
+            steps{
+                sh "docker login -u ${docker_cred_USR} -p ${docker_cred_PSW}"
+                sh "docker push liranos86/docker-cicd:${BUILD_NUMBER}"
+            }
+        }
+    }
+}
