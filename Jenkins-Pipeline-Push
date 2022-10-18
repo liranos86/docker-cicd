@@ -1,8 +1,8 @@
 pipeline { 
-    agent {label 'docker'}
+    agent {label 'linux'}
     environment{
-        docker_cred_USR = "${USER}" 
-        docker_cred_PSW = "${PSW}"
+        //user and token stored in jenkins cred manager as 'dockerhub' id
+        DOCKERHUB_CREDENTIALS=credentials('dockerhub')
     }
     stages{
         stage('pull from git'){
@@ -16,11 +16,21 @@ pipeline {
                 sh "docker build -t liranos86/docker-cicd:${BUILD_NUMBER} ./docker-cicd"
             }
         }
-        stage ('push') {
+        stage ('login') {
             steps{
-                sh "docker login -u ${docker_cred_USR} -p ${docker_cred_PSW}"
+                sh 'echo $DOCKERHUB_CREDENTIALS_PSW | docker login -u $DOCKERHUB_CREDENTIALS_USR --password-stdin'
+            }
+        }
+        stage('push') {
+            steps{
                 sh "docker push liranos86/docker-cicd:${BUILD_NUMBER}"
             }
+        }
+    }
+
+    post {
+        always {
+            sh 'docker logout'
         }
     }
 }
